@@ -8,6 +8,8 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+
+
 @Mod.EventBusSubscriber(
         modid = "mcbutitremembersyourdeaths",
         bus = Mod.EventBusSubscriber.Bus.FORGE
@@ -39,20 +41,37 @@ public class DeathListener {
             "Seriously? That again?",
             "Try not to die in the same way twice!"
     };
-
-    @SubscribeEvent
+        @SubscribeEvent
 public static void onPlayerDeath(LivingDeathEvent event) {
     if (!(event.getEntity() instanceof Player player)) return;
+    if (player.level().isClientSide()) return;
 
     String type = event.getSource().getMsgId();
     String message = getFunnyMessage(type);
 
-    // Display the message in the player's chat
+    // Send to chat (not overlay)
     player.displayClientMessage(
         Component.literal(message),
-        true
+        false
     );
 }
+
+
+
+
+//     @SubscribeEvent
+// public static void onPlayerDeath(LivingDeathEvent event) {
+//     if (!(event.getEntity() instanceof Player player)) return;
+
+//     String type = event.getSource().getMsgId();
+//     String message = getFunnyMessage(type);
+
+//     // Display the message in the player's chat
+//     player.displayClientMessage(
+//         Component.literal(message),
+//         true
+//     );
+// }
 
     
 
