@@ -1,28 +1,27 @@
 package com.austin.mcbutitremembersyourdeaths;
 
+import java.util.Optional;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(
-        modid = "mcbutitremembersyourdeaths",
-        bus = Mod.EventBusSubscriber.Bus.FORGE
-)
+@Mod.EventBusSubscriber(modid = "mcbutitremembersyourdeaths")
 public class PlayerCloneHandler {
-
-    private static final String MOD_DATA_TAG = "mcbutitremembersyourdeaths";
 
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
+
         if (!event.isWasDeath()) return;
 
-        CompoundTag originalData = event.getOriginal()
-                .getPersistentData()
-                .getCompoundOrEmpty(MOD_DATA_TAG);
+        CompoundTag originalData = event.getOriginal().getPersistentData();
+        CompoundTag newData = event.getEntity().getPersistentData();
 
-        event.getEntity()
-                .getPersistentData()
-                .put(MOD_DATA_TAG, originalData.copy());
+        Optional<CompoundTag> optionalTag = originalData.getCompound("FunnyDeathCounts");
+
+        if (optionalTag.isPresent()) {
+            newData.put("FunnyDeathCounts", optionalTag.get());
+        }
     }
 }
