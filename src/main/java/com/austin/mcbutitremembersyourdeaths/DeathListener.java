@@ -11,7 +11,6 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-
 @Mod.EventBusSubscriber(
         modid = "mcbutitremembersyourdeaths",
         bus = Mod.EventBusSubscriber.Bus.FORGE
@@ -24,11 +23,11 @@ public class DeathListener {
     private static final Map<String, String[][]> deathMessages = new HashMap<>();
     static {
         deathMessages.put("fall", new String[][] {
-                {"You fell from a high place… again.", "Oof! Watch your step."}, // tier 0
-                {"Gravity called. You didn’t answer.", "Another fall… seriously?"}, // tier 1
-                {"This is getting repetitive… you fell… again!", "Falling seems to be your specialty."}, // tier 2
-                {"Are you trying to touch the ground again?", "The ground misses you."}, // tier 3
-                {"Gravity is relentless… and so are you.", "You’re on a first-name basis with the ground."} // tier 4
+                {"You fell from a high place… again.", "Oof! Watch your step."}, 
+                {"Gravity called. You didn’t answer.", "Another fall… seriously?"}, 
+                {"This is getting repetitive… you fell… again!", "Falling seems to be your specialty."}, 
+                {"Are you trying to touch the ground again?", "The ground misses you."}, 
+                {"Gravity is relentless… and so are you.", "You’re on a first-name basis with the ground."} 
         });
 
         deathMessages.put("fire", new String[][] {
@@ -55,52 +54,46 @@ public class DeathListener {
                 {"Explosions bow to your power… sort of.", "You and TNT: a legendary story."}
         });
 
-        deathMessages.put("magic", new String[][] {
-                {"Spell fail! Try again.", "Magic is hard!"},
-                {"Magic got you again.", "The wizard is not impressed."},
-                {"You’ve angered the wizard… again.", "Your magic needs work."},
-                {"Magic whispers your name… sadly.", "Even magic laughs at you now."},
-                {"The arcane remembers you.", "You are infamous in magical circles."}
-        });
-
-        deathMessages.put("arrow", new String[][] {
-                {"Ouch! That projectile has your name on it.", "Target practice gone wrong."},
-                {"You’re like a target dummy.", "Arrows everywhere!"},
-                {"Seriously, maybe stay inside.", "Stop being arrow bait."},
-                {"You’ve become one with arrow physics.", "Every arrow has a memo for you."},
-                {"Arrows salute your dedication.", "You are the chosen of the bow."}
-        });
-
-        deathMessages.put("inWall", new String[][] {
-                {"Stuck again?", "You shouldn’t hug walls so tightly."},
-                {"I think the wall is out to get you.", "Walls 1, You 0."},
-                {"Do you even have air?", "The wall wins… again."},
-                {"Walls remember your stubbornness.", "Your friendship with walls is legendary."},
-                {"Walls bow to your persistence.", "You have a history with walls now."}
-        });
-
-        deathMessages.put("drown", new String[][] {
-                {"Water is not your friend.", "Splash! Not in a good way."},
-                {"You know you can swim, right?", "Maybe learn to breathe underwater."},
-                {"Water hates you personally…", "Seriously, avoid water."},
-                {"Even oceans sigh at your arrival.", "The deep sea remembers you."},
-                {"The sea marks you as its mortal enemy.", "Water bows reluctantly."}
-        });
-
-        deathMessages.put("starve", new String[][] {
-                {"You should have eaten.", "Hunger is no joke."},
-                {"Hunger is real… and fatal.", "Starving again?"},
-                {"Starvation notices you more each time.", "Maybe eat something…"},
-                {"The pantry laughs at your attempts.", "Hunger is patient… unlike you."},
-                {"You are legendary in famine circles.", "Your stomach has a fan club."}
-        });
-
         deathMessages.put("mob", new String[][] {
                 {"The mob wins… this time.", "You got mobbed!"},
                 {"Maybe fight back?", "Mobs are relentless."},
                 {"The mobs are laughing at you.", "You’re their favorite target."},
                 {"You are famous among mobs now.", "They know your weaknesses."},
                 {"Legendary target: you.", "Mobs speak your name in fear… or laughter."}
+        });
+    }
+
+    // Hardcore-specific death messages by death type
+    private static final Map<String, String[]> hardcoreMessages = new HashMap<>();
+    static {
+        hardcoreMessages.put("fall", new String[] {
+                "Hardcore Fall! Gravity always wins.",
+                "You plummeted to your doom… Hardcore style!",
+                "One life, one fall… Hardcore doesn’t forgive."
+        });
+
+        hardcoreMessages.put("fire", new String[] {
+                "Hardcore Fire! You burn forever.",
+                "Flames claimed you in Hardcore.",
+                "One life, incinerated. Hardcore style!"
+        });
+
+        hardcoreMessages.put("lava", new String[] {
+                "Hardcore Lava! Molten fate is cruel.",
+                "You are melted in Hardcore fashion.",
+                "Lava and Hardcore: an eternal combo."
+        });
+
+        hardcoreMessages.put("explosion", new String[] {
+                "Hardcore Boom! TNT wins.",
+                "Explosive Hardcore demise achieved.",
+                "Kaboom! No second chances in Hardcore."
+        });
+
+        hardcoreMessages.put("mob", new String[] {
+                "Hardcore mobs got you good.",
+                "No respawns here, mobs win forever.",
+                "One life, one death… mobs rejoice."
         });
     }
 
@@ -111,13 +104,17 @@ public class DeathListener {
 
         String type = normalizeDeathType(event.getSource().getMsgId());
 
+        // Hardcore world - select hardcore message by type
+        if (player.level().getLevelData().isHardcore()) {
+            String[] messages = hardcoreMessages.getOrDefault(type, hardcoreMessages.get("mob"));
+            String msg = messages[random.nextInt(messages.length)];
+            player.displayClientMessage(Component.literal(msg), false);
+            DeathMessageStore.LAST_DEATH_MESSAGE = Component.literal(msg);
+            return;
+        }
+
         CompoundTag data = player.getPersistentData();
         CompoundTag deathData = data.getCompoundOrEmpty("FunnyDeathCounts");
-
-        // // Increment death count safely
-        // int count = deathData.getIntOr(type, 0) + 1;
-        // deathData.putInt(type, count);
-        // data.put("FunnyDeathCounts", deathData);
 
         // Increment death count safely
         int count = deathData.getIntOr(type, 0) + 1;
@@ -126,9 +123,9 @@ public class DeathListener {
 
         // If this is the first time dying this way, use vanilla message
         if (count == 1) {
-          DeathMessageStore.LAST_DEATH_MESSAGE = null;
-          return;
-}
+            DeathMessageStore.LAST_DEATH_MESSAGE = null;
+            return;
+        }
 
         // Compute current tier (0–4)
         int tier;
